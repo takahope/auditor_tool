@@ -3,6 +3,10 @@
   <head>
     <base target="_top">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 條碼掃描庫 Quagga2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+
     <style>
       * {
         box-sizing: border-box;
@@ -374,6 +378,36 @@
         font-size: 18px;
         letter-spacing: 1px;
       }
+
+      /* ==================== 條碼掃描相關樣式 ==================== */
+      #scanner-reader video,
+      #scanner-reader canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 300px;
+        object-fit: cover;
+      }
+
+      #scanner-reader canvas.drawingBuffer {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      @keyframes scanSuccess {
+        0% { background-color: #34a853; transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { background-color: #f0ebf8; transform: scale(1); }
+      }
+
+      .scan-success-animation {
+        animation: scanSuccess 0.6s ease-out;
+      }
+
+      /* 按鈕 hover 效果 */
+      #start-camera-btn:hover { background: #1557b0; }
+      #stop-camera-btn:hover { background: #b31412; }
+      #manual-scan-btn:hover { background: #5e35b1; }
     </style>
   </head>
   <body>
@@ -390,6 +424,47 @@
       </div>
 
       <form id="myForm">
+        <!-- 條碼掃描功能卡片 -->
+        <div class="question-card">
+          <h2>快速掃描財產編號 <span style="font-size: 14px; color: #5f6368; font-weight: 400;">(可選)</span></h2>
+
+          <!-- 手動輸入條碼 -->
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 14px; color: #5f6368; margin-bottom: 8px;">手動輸入條碼</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="barcode-input" placeholder="輸入條碼後按 Enter..."
+                     style="flex: 1; padding: 12px 16px; border: 1px solid #dadce0; border-radius: 4px; font-size: 16px;">
+              <button type="button" id="manual-scan-btn"
+                      style="padding: 12px 24px; background: #673ab7; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                查詢
+              </button>
+            </div>
+            <p id="barcode-error" style="color: #d93025; font-size: 14px; margin-top: 8px; display: none;">找不到此財產編號</p>
+          </div>
+
+          <!-- 鏡頭掃描按鈕 -->
+          <button type="button" id="start-camera-btn"
+                  style="width: 100%; padding: 14px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: 500; margin-bottom: 12px;">
+            📷 啟動鏡頭掃描
+          </button>
+          <button type="button" id="stop-camera-btn"
+                  style="width: 100%; padding: 14px; background: #d93025; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: 500; display: none;">
+            ⏹ 停止掃描
+          </button>
+
+          <!-- 掃描預覽區域 -->
+          <div id="scanner-preview" style="display: none; margin-top: 16px; background: #f8f9fa; padding: 16px; border-radius: 8px;">
+            <div style="margin-bottom: 12px;">
+              <label style="font-size: 13px; color: #5f6368;">選擇相機：</label>
+              <select id="camera-select" style="width: 100%; padding: 8px; border: 1px solid #dadce0; border-radius: 4px; margin-top: 4px;"></select>
+            </div>
+            <div id="scanner-reader" style="position: relative; width: 100%; min-height: 250px; background: #2c2c2c; border-radius: 8px; overflow: hidden;"></div>
+            <div id="scan-result" style="margin-top: 12px; padding: 12px; background: white; border-radius: 4px; text-align: center; color: #5f6368;">
+              等待掃描條碼...
+            </div>
+          </div>
+        </div>
+
         <!-- 問題1: 駐站 -->
         <div class="question-card">
           <h2>請選擇您的駐站</h2>
@@ -469,6 +544,13 @@
       let dataMap = {};
       let sevenZipVersions = [];
 
+      // ==================== 條碼掃描相關變數 ====================
+      let isScanning = false;
+      let lastScannedCode = '';
+      let scanCooldown = null;
+      let currentStream = null;
+      let computerToStationMap = {}; // 反向索引：電腦產編 -> 駐站
+
       // ==================== 進度條控制變數 ====================
       let _loaderIntervalId;
       let _dataLoadStatus = {
@@ -532,14 +614,373 @@
         }
       }
 
+      // ==================== 條碼掃描功能 ====================
+
+      /**
+       * 建立反向索引（電腦產編 -> 駐站）
+       */
+      function buildReverseIndex() {
+        computerToStationMap = {};
+        Object.keys(dataMap).forEach(station => {
+          dataMap[station].forEach(computer => {
+            computerToStationMap[computer] = station;
+          });
+        });
+        console.log('反向索引已建立，共', Object.keys(computerToStationMap).length, '筆資料');
+      }
+
+      /**
+       * 格式化條碼：去掉前2位，並插入連字號
+       * 格式：18XXXXXXXXXXXXXXXXX -> XXXXXXX-XXXX-XXXXXXX
+       *
+       * @param {string} barcode - 原始條碼
+       * @returns {string} - 格式化後的條碼
+       */
+      function formatBarcode(barcode) {
+        if (!barcode) return '';
+
+        const cleanCode = barcode.trim();
+
+        // 如果條碼長度小於2，無法處理
+        if (cleanCode.length < 2) {
+          console.warn('條碼長度不足，無法格式化:', cleanCode);
+          return cleanCode;
+        }
+
+        // 去掉前2位
+        let processed = cleanCode.substring(2);
+
+        // 如果去掉前2位後長度不足11位，直接返回（無法格式化）
+        if (processed.length < 11) {
+          console.warn('去掉前2位後長度不足，返回處理後的條碼:', processed);
+          return processed;
+        }
+
+        // 格式化為 XXXXXXX-XXXX-XXXXXXX
+        // 位置 0-6 (7位) + "-" + 位置 7-10 (4位) + "-" + 剩餘位數
+        const formatted = processed.substring(0, 7) + '-' +
+                          processed.substring(7, 11) + '-' +
+                          processed.substring(11);
+
+        console.log('條碼格式化:', cleanCode, '->', formatted);
+        return formatted;
+      }
+
+      /**
+       * 根據條碼查詢並自動填寫表單
+       */
+      function processBarcodeInput(barcode, isFromCamera = false) {
+        if (!barcode || barcode.trim() === '') return;
+
+        const originalBarcode = barcode.trim(); // 原始條碼
+        const formattedBarcode = formatBarcode(originalBarcode); // 格式化後的條碼
+
+        const errorEl = document.getElementById('barcode-error');
+        const resultEl = document.getElementById('scan-result');
+
+        // 先用格式化後的條碼查詢
+        let station = computerToStationMap[formattedBarcode];
+        let finalBarcode = formattedBarcode;
+
+        // 如果找不到，嘗試用原始條碼查詢（向下相容）
+        if (!station) {
+          station = computerToStationMap[originalBarcode];
+          finalBarcode = originalBarcode;
+
+          console.log('格式化條碼未找到，使用原始條碼查詢:', originalBarcode);
+        }
+
+        if (station) {
+          // 找到對應的駐站，自動填寫表單
+          document.getElementById('groupSelect').value = station;
+          updateComputerOptions(station); // 更新電腦產編下拉選單
+
+          // 等待下拉選單更新後選擇電腦
+          setTimeout(() => {
+            document.getElementById('computerSelect').value = finalBarcode;
+
+            // 視覺回饋
+            const groupCard = document.getElementById('groupSelect').closest('.question-card');
+            const computerCard = document.getElementById('computerSelect').closest('.question-card');
+
+            groupCard.classList.add('scan-success-animation');
+            computerCard.classList.add('scan-success-animation');
+
+            setTimeout(() => {
+              groupCard.classList.remove('scan-success-animation');
+              computerCard.classList.remove('scan-success-animation');
+            }, 600);
+
+            // 滾動到電腦產編欄位
+            computerCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+
+          // 清空輸入框
+          document.getElementById('barcode-input').value = '';
+          errorEl.style.display = 'none';
+
+          if (isFromCamera) {
+            // 顯示原始條碼和格式化後的條碼（如果不同）
+            const displayText = originalBarcode !== formattedBarcode
+              ? '✓ 掃描成功<br><small style="font-size: 12px;">原始: ' + originalBarcode + '</small><br>' + station + ' - ' + finalBarcode
+              : '✓ 掃描成功：' + station + ' - ' + finalBarcode;
+
+            resultEl.innerHTML = '<span style="color: #34a853; font-weight: bold;">' + displayText + '</span>';
+          } else {
+            const alertText = originalBarcode !== formattedBarcode
+              ? '查詢成功！\n原始條碼：' + originalBarcode + '\n格式化後：' + formattedBarcode + '\n駐站：' + station + '\n電腦產編：' + finalBarcode
+              : '查詢成功！\n駐站：' + station + '\n電腦產編：' + finalBarcode;
+
+            alert(alertText);
+          }
+
+        } else {
+          // 找不到對應的財產編號
+          errorEl.style.display = 'block';
+          errorEl.textContent = '找不到此財產編號（嘗試了原始碼和格式化碼）';
+
+          if (isFromCamera) {
+            const displayText = originalBarcode !== formattedBarcode
+              ? '✗ 找不到<br><small>原始: ' + originalBarcode + '</small><br>格式化: ' + formattedBarcode
+              : '✗ 找不到財產編號：' + originalBarcode;
+
+            resultEl.innerHTML = '<span style="color: #d93025;">' + displayText + '</span>';
+          }
+
+          console.error('找不到條碼: 原始=' + originalBarcode + ', 格式化=' + formattedBarcode);
+        }
+      }
+
+      /**
+       * 啟動鏡頭掃描
+       */
+      function startCameraScanning() {
+        document.getElementById('start-camera-btn').style.display = 'none';
+        document.getElementById('stop-camera-btn').style.display = 'block';
+        document.getElementById('scanner-preview').style.display = 'block';
+        isScanning = true;
+
+        initQuagga();
+      }
+
+      /**
+       * 停止鏡頭掃描
+       */
+      async function stopCameraScanning() {
+        if (!isScanning) return;
+
+        isScanning = false;
+        await stopQuagga();
+
+        document.getElementById('start-camera-btn').style.display = 'block';
+        document.getElementById('stop-camera-btn').style.display = 'none';
+        document.getElementById('scanner-preview').style.display = 'none';
+        document.getElementById('scan-result').innerHTML = '等待掃描條碼...';
+      }
+
+      /**
+       * 初始化 Quagga 掃描器
+       */
+      function initQuagga(deviceId = null) {
+        const constraints = {
+          width: { min: 640 },
+          height: { min: 480 },
+          aspectRatio: { min: 1, max: 2 }
+        };
+
+        if (deviceId) {
+          constraints.deviceId = { exact: deviceId };
+        } else {
+          constraints.facingMode = "environment"; // 後置鏡頭
+        }
+
+        const config = {
+          inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#scanner-reader'),
+            constraints: constraints
+          },
+          decoder: {
+            readers: [
+              "code_128_reader", "ean_reader", "ean_8_reader",
+              "code_39_reader", "codabar_reader", "upc_reader"
+            ],
+            debug: {
+              drawBoundingBox: true,
+              drawScanline: true
+            }
+          },
+          locate: true,
+          numOfWorkers: navigator.hardwareConcurrency || 4
+        };
+
+        Quagga.init(config, function(err) {
+          if (err) {
+            console.error('Quagga 初始化失敗:', err);
+            alert('啟動掃描器失敗：' + err.message);
+            stopCameraScanning();
+            return;
+          }
+
+          console.log("Quagga 初始化成功");
+          Quagga.onDetected(onBarcodeDetected);
+          Quagga.start();
+
+          setTimeout(() => {
+            const videoEl = document.querySelector('#scanner-reader video');
+            if (videoEl && videoEl.srcObject) {
+              currentStream = videoEl.srcObject;
+            }
+            populateCameraList();
+          }, 500);
+        });
+      }
+
+      /**
+       * 條碼偵測回調
+       */
+      function onBarcodeDetected(data) {
+        if (!data || !data.codeResult) return;
+
+        const code = data.codeResult.code;
+
+        // 防止重複掃描
+        if (code === lastScannedCode && scanCooldown) return;
+
+        lastScannedCode = code;
+        clearTimeout(scanCooldown);
+        scanCooldown = setTimeout(() => {
+          lastScannedCode = '';
+        }, 2000);
+
+        processBarcodeInput(code, true);
+      }
+
+      /**
+       * 填充相機列表
+       */
+      async function populateCameraList() {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+          if (videoDevices.length <= 1) {
+            document.getElementById('camera-select').parentElement.style.display = 'none';
+            return;
+          }
+
+          const selectEl = document.getElementById('camera-select');
+          selectEl.innerHTML = '';
+
+          let currentDeviceId = null;
+          const videoEl = document.querySelector('#scanner-reader video');
+          if (videoEl && videoEl.srcObject) {
+            const track = videoEl.srcObject.getVideoTracks()[0];
+            currentDeviceId = track.getSettings().deviceId;
+          }
+
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || '相機 ' + (index + 1);
+            if (device.deviceId === currentDeviceId) {
+              option.selected = true;
+            }
+            selectEl.appendChild(option);
+          });
+
+        } catch (err) {
+          console.error('填充相機列表失敗:', err);
+        }
+      }
+
+      /**
+       * 停止 Quagga
+       */
+      async function stopQuagga() {
+        return new Promise((resolve) => {
+          try {
+            if (currentStream) {
+              currentStream.getTracks().forEach(track => track.stop());
+              currentStream = null;
+            }
+
+            const videoEl = document.querySelector('#scanner-reader video');
+            if (videoEl && videoEl.srcObject) {
+              videoEl.srcObject.getTracks().forEach(track => track.stop());
+              videoEl.srcObject = null;
+            }
+
+            Quagga.offDetected(onBarcodeDetected);
+            Quagga.stop();
+
+            const readerEl = document.querySelector('#scanner-reader');
+            if (readerEl) {
+              while (readerEl.firstChild) {
+                readerEl.removeChild(readerEl.firstChild);
+              }
+            }
+
+          } catch (err) {
+            console.error('停止 Quagga 時發生錯誤:', err);
+          }
+
+          setTimeout(resolve, 200);
+        });
+      }
+
+      /**
+       * 設置掃描相關事件監聽器
+       */
+      function setupBarcodeEventListeners() {
+        // 手動輸入條碼
+        document.getElementById('barcode-input').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            processBarcodeInput(document.getElementById('barcode-input').value);
+          }
+        });
+
+        document.getElementById('manual-scan-btn').addEventListener('click', () => {
+          processBarcodeInput(document.getElementById('barcode-input').value);
+        });
+
+        // 鏡頭掃描按鈕
+        document.getElementById('start-camera-btn').addEventListener('click', startCameraScanning);
+        document.getElementById('stop-camera-btn').addEventListener('click', stopCameraScanning);
+
+        // 相機切換
+        document.getElementById('camera-select').addEventListener('change', async (e) => {
+          if (isScanning) {
+            const newCameraId = e.target.value;
+            e.target.disabled = true;
+            await stopQuagga();
+            setTimeout(() => {
+              if (isScanning) {
+                initQuagga(newCameraId);
+                setTimeout(() => {
+                  e.target.disabled = false;
+                }, 500);
+              }
+            }, 300);
+          }
+        });
+      }
+
+      // ==================== 原有功能繼續 ====================
+
       document.addEventListener("DOMContentLoaded", function() {
         // 立即顯示進度條
         showLoader('正在載入表單資料...');
-        
+
         // 同時載入組別資料、7-Zip 版本清單和使用者資訊
         google.script.run.withSuccessHandler(populateGroupSelect).getSelectData();
         google.script.run.withSuccessHandler(populateSevenZipVersions).getSevenZipVersions();
         google.script.run.withSuccessHandler(displayUserInfo).getCurrentUser();
+
+        // ✅ 新增：初始化條碼掃描事件監聽器
+        setupBarcodeEventListeners();
       });
 
       /**
@@ -584,6 +1025,9 @@
         // 標記此資料已載入完成
         _dataLoadStatus.selectData = true;
         checkDataLoadComplete();
+
+        // ✅ 新增：建立反向索引（電腦產編 -> 駐站）
+        buildReverseIndex();
       }
 
       function populateSevenZipVersions(versions) {

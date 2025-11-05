@@ -27,7 +27,7 @@ function doGet(e) {
   
   // 設定 X-Frame-Options 以允許在 Google SITES 等環境中嵌入
   htmlOutput.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  
+  htmlOutput.addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
   return htmlOutput;
 }
 
