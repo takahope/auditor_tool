@@ -382,7 +382,10 @@
       <div class="header-card">
         <div class="header-banner"></div>
         <div class="header-content">
-          <h1>電腦狀態回報表單</h1>
+          <h1>電腦軟體版本更新稽核紀錄</h1>
+          <p id="userInfo" style="color: #5f6368; font-size: 14px; margin-top: 8px; display: none;">
+            登入使用者：<span id="userName"></span>
+          </p>
         </div>
       </div>
 
@@ -470,7 +473,8 @@
       let _loaderIntervalId;
       let _dataLoadStatus = {
         selectData: false,
-        sevenZipData: false
+        sevenZipData: false,
+        userData: false
       };
 
       /**
@@ -523,7 +527,7 @@
        * 檢查所有資料是否載入完成
        */
       function checkDataLoadComplete() {
-        if (_dataLoadStatus.selectData && _dataLoadStatus.sevenZipData) {
+        if (_dataLoadStatus.selectData && _dataLoadStatus.sevenZipData && _dataLoadStatus.userData) {
           hideLoader('載入完成！');
         }
       }
@@ -531,11 +535,30 @@
       document.addEventListener("DOMContentLoaded", function() {
         // 立即顯示進度條
         showLoader('正在載入表單資料...');
-        // 同時載入組別資料和 7-Zip 版本清單
+        
+        // 同時載入組別資料、7-Zip 版本清單和使用者資訊
         google.script.run.withSuccessHandler(populateGroupSelect).getSelectData();
         google.script.run.withSuccessHandler(populateSevenZipVersions).getSevenZipVersions();
+        google.script.run.withSuccessHandler(displayUserInfo).getCurrentUser();
       });
-      
+
+      /**
+       * 顯示當前登入使用者資訊
+       * @param {object} userInfo - 使用者資訊物件
+       */
+      function displayUserInfo(userInfo) {
+        if (userInfo && userInfo.isAuthenticated) {
+          const userInfoEl = document.getElementById('userInfo');
+          const userNameEl = document.getElementById('userName');
+          userNameEl.textContent = userInfo.email;
+          userInfoEl.style.display = 'block';
+        }
+        
+        // 標記使用者資料已載入完成
+        _dataLoadStatus.userData = true;
+        checkDataLoadComplete();
+      }
+
       function populateGroupSelect(data) {
         dataMap = data;
         const groupSelect = document.getElementById("groupSelect");

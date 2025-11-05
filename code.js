@@ -23,7 +23,7 @@ const LOG_SHEET_NAME = "Log";
 function doGet(e) {
   // 從 'Index.html' 檔案建立 HTML 輸出
   const htmlOutput = HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('電腦狀態回報表單');
+    .setTitle('電腦軟體版本更新稽核紀錄');
   
   // 設定 X-Frame-Options 以允許在 Google SITES 等環境中嵌入
   htmlOutput.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -118,10 +118,14 @@ function processFormData(formObject) {
       throw new Error(`找不到工作表: ${LOG_SHEET_NAME}`);
     }
 
+    // 取得提交表單的使用者資訊
+    const userEmail = Session.getActiveUser().getEmail();
+    const userName = userEmail.split('@')[0]; // 取得 @ 前的使用者名稱
+
     // 檢查 'Log' 工作表是否為空，如果為空則添加標題
     if (logSheet.getLastRow() === 0) {
       const headers = [
-        "回報時間", "駐站", "電腦產編", 
+        "回報時間", "提交者Email", "駐站", "電腦產編", 
         "Windows更新", "Chrome更新", "防毒軟體更新", 
         "7-Zip版本", "TeamViewer版本", "Forticlient版本", 
         "Adobe Acrobat版本", "備註"
@@ -132,6 +136,7 @@ function processFormData(formObject) {
     // 準備要寫入的新資料列
     const newRow = [
       new Date(), // 回報時間
+      userEmail,  // 提交者Email (新增)
       formObject.group,
       formObject.computer,
       formObject.winUpdated,
@@ -147,8 +152,8 @@ function processFormData(formObject) {
     // 將資料附加到 'Log' 工作表的最後一行
     logSheet.appendRow(newRow);
 
-    // 回傳成功訊息
-    const successMessage = `回報成功：${formObject.group} - ${formObject.computer} 的狀態已於 ${new Date().toLocaleString()} 紀錄。`;
+    // 回傳成功訊息（包含使用者資訊）
+    const successMessage = `回報成功：${formObject.group} - ${formObject.computer} 的狀態已於 ${new Date().toLocaleString()} 由 ${userName} 提交。`;
     console.log(successMessage);
     return successMessage;
 
@@ -167,6 +172,29 @@ function getAppUrl() {
   return ScriptApp.getService().getUrl();
 }
 
+
+/**
+ * 取得當前訪問者的使用者資訊（用於前端顯示）
+ * @returns {object} - 包含使用者 email 和名稱的物件
+ */
+function getCurrentUser() {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    const userName = userEmail ? userEmail.split('@')[0] : '訪客';
+    return {
+      email: userEmail,
+      name: userName,
+      isAuthenticated: !!userEmail
+    };
+  } catch (e) {
+    console.error(`Error getting user: ${e.message}`);
+    return {
+      email: '',
+      name: '訪客',
+      isAuthenticated: false
+    };
+  }
+}
 
 // =================================================================
 // Google Sheet 介面輔助功能
