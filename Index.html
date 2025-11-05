@@ -389,34 +389,34 @@
       <form id="myForm">
         <!-- 問題1: 駐站 -->
         <div class="question-card">
-          <h2>請選擇您的駐站<span class="required-indicator">*</span></h2>
-          <select id="groupSelect" name="group" onchange="updateComputerOptions(this.value)" required>
+          <h2>請選擇您的駐站</h2>
+          <select id="groupSelect" name="group" onchange="updateComputerOptions(this.value)">
             <option value="">載入中...</option>
           </select>
         </div>
 
         <!-- 問題2: 電腦產編 -->
         <div class="question-card">
-          <h2>請選擇電腦產編<span class="required-indicator">*</span></h2>
-          <select id="computerSelect" name="computer" required>
+          <h2>請選擇電腦產編</h2>
+          <select id="computerSelect" name="computer">
             <option value="">載入中...</option>
           </select>
         </div>
 
         <!-- 問題3: 軟體資訊回報 -->
         <div class="question-card">
-          <h2>軟體資訊回報<span class="required-indicator">*</span></h2>
+          <h2>軟體資訊回報</h2>
           <div class="checkbox-group">
             <div class="checkbox-item">
-              <input type="checkbox" id="winUpdateCheck" required>
+              <input type="checkbox" id="winUpdateCheck">
               <label for="winUpdateCheck">Windows 是否更新至最新版本</label>
             </div>
             <div class="checkbox-item">
-              <input type="checkbox" id="chromeUpdateCheck" required>
+              <input type="checkbox" id="chromeUpdateCheck">
               <label for="chromeUpdateCheck">Chrome 是否新增至最新版本</label>
             </div>
             <div class="checkbox-item">
-              <input type="checkbox" id="antivirusDefCheck" required>
+              <input type="checkbox" id="antivirusDefCheck">
               <label for="antivirusDefCheck">防毒軟體病毒碼是否為最新版本</label>
             </div>
           </div>
@@ -424,8 +424,8 @@
 
         <!-- 問題4: 7-Zip 版本 -->
         <div class="question-card">
-          <h2>7-Zip 版本<span class="required-indicator">*</span></h2>
-          <select id="sevenZipVersion" name="sevenZipVersion" required>
+          <h2>7-Zip 版本</h2>
+          <select id="sevenZipVersion" name="sevenZipVersion">
             <option value="">載入中...</option>
           </select>
         </div>
@@ -433,7 +433,7 @@
         <!-- 問題5: 備註 -->
         <div class="question-card">
           <h2>備註</h2>
-          <textarea id="notes" name="notes" placeholder="如有其他需要說明的事項，請在此填寫..."></textarea>
+          <textarea id="notes" name="notes" placeholder="如有其他需要說明的事項,請在此填寫..."></textarea>
         </div>
 
         <!-- 提交按鈕 -->
@@ -457,7 +457,7 @@
 
       /**
        * 顯示進度條載入動畫
-       * @param {string} text - 顯示的載入訊息（選填，預設為「頁面載入中...」）
+       * @param {string} text - 顯示的載入訊息（選填,預設為「頁面載入中...」）
        */
       function showLoader(text = '頁面載入中...') {
         const _loaderOverlay = document.getElementById('loaderOverlay');
@@ -470,7 +470,7 @@
         _loadingText.textContent = text;
         _loaderOverlay.style.display = 'flex';
 
-        // 模擬一個平滑的進度條，直到 90%
+        // 模擬一個平滑的進度條,直到 90%
         _loaderIntervalId = setInterval(() => {
           if (progress < 90) {
             progress += Math.floor(Math.random() * 5) + 1;
@@ -483,7 +483,7 @@
 
       /**
        * 隱藏進度條載入動畫
-       * @param {string} text - 顯示的完成訊息（選填，預設為「載入完成！」）
+       * @param {string} text - 顯示的完成訊息（選填,預設為「載入完成！」）
        */
       function hideLoader(text = '載入完成！') {
         const _loaderOverlay = document.getElementById('loaderOverlay');
@@ -572,7 +572,7 @@
         computerSelect.innerHTML = '';
         
         if (selectedGroup && dataMap[selectedGroup]) {
-          // 有選擇組別時，先添加預設選項再添加電腦清單
+          // 有選擇組別時,先添加預設選項再添加電腦清單
           computerSelect.add(new Option("請選擇...", ""));
           const computers = dataMap[selectedGroup].sort();
           computers.forEach(computer => {
@@ -580,7 +580,7 @@
             computerSelect.add(option);
           });
         } else {
-          // 沒有選擇組別時，顯示提示訊息
+          // 沒有選擇組別時,顯示提示訊息
           computerSelect.add(new Option("--請先選擇組別--", ""));
         }
       }
@@ -589,7 +589,7 @@
       document.getElementById("myForm").addEventListener("submit", function(e) {
         e.preventDefault();
 
-        // 手動建立表單物件，確保勾選狀態正確傳送
+        // 手動建立表單物件,確保勾選狀態正確傳送
         const formObject = {
           group: document.getElementById("groupSelect").value,
           computer: document.getElementById("computerSelect").value,
@@ -601,7 +601,7 @@
           antivirusUpdated: document.getElementById("antivirusDefCheck").checked
         };
 
-        // 調試：在瀏覽器控制台顯示要送出的資料
+        // 調試:在瀏覽器控制台顯示要送出的資料
         console.log("準備送出的表單資料：", formObject);
         console.log("Windows 勾選狀態：", formObject.winUpdated);
         console.log("Chrome 勾選狀態：", formObject.chromeUpdated);
@@ -646,7 +646,7 @@
       document.addEventListener("DOMContentLoaded", function() {
         // 呼叫後端的 getAppUrl() 函式
         google.script.run.withSuccessHandler(function(url) {
-          // 成功取得 URL 後，在後面加上 ?page=test 參數
+          // 成功取得 URL 後,在後面加上 ?page=test 參數
           var testPageUrl = url + "?page=test";
           // 將產生的 URL 設定到 <a> 標籤的 href 屬性
           document.getElementById("testLink").href = testPageUrl;
