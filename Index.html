@@ -83,7 +83,7 @@
       }
 
       /* 表單輸入欄位 */
-      select, textarea {
+      select, textarea, input[type="text"] {
         width: 100%;
         padding: 14px 16px;
         border-radius: 4px;
@@ -96,11 +96,11 @@
         line-height: 1.5;
       }
 
-      select:hover, textarea:hover {
+      select:hover, textarea:hover, input[type="text"]:hover {
         border-color: #80868b;
       }
 
-      select:focus, textarea:focus {
+      select:focus, textarea:focus, input[type="text"]:focus {
         outline: none;
         border-color: #673ab7;
         border-width: 2px;
@@ -244,12 +244,12 @@
           font-size: 16px;
         }
 
-        select, textarea {
+        select, textarea, input[type="text"] {
           font-size: 16px;
           padding: 13px 15px;
         }
 
-        select:focus, textarea:focus {
+        select:focus, textarea:focus, input[type="text"]:focus {
           padding: 12px 14px;
         }
 
@@ -303,12 +303,12 @@
           font-size: 15px;
         }
 
-        select, textarea {
+        select, textarea, input[type="text"] {
           font-size: 15px;
           padding: 12px 14px;
         }
 
-        select:focus, textarea:focus {
+        select:focus, textarea:focus, input[type="text"]:focus {
           padding: 11px 13px;
         }
 
@@ -430,7 +430,13 @@
           </select>
         </div>
 
-        <!-- 問題5: 備註 -->
+        <!-- 問題5: TeamViewer 版本 -->
+        <div class="question-card">
+          <h2>TeamViewer 版本</h2>
+          <input type="text" id="teamViewerVersion" name="teamViewerVersion" placeholder="請輸入 TeamViewer 版本（例如：15.0.0 或 無安裝）">
+        </div>
+
+        <!-- 問題6: 備註 -->
         <div class="question-card">
           <h2>備註</h2>
           <textarea id="notes" name="notes" placeholder="如有其他需要說明的事項,請在此填寫..."></textarea>
@@ -595,6 +601,7 @@
           computer: document.getElementById("computerSelect").value,
           notes: document.getElementById("notes").value,
           sevenZipVersion: document.getElementById("sevenZipVersion").value,
+          teamViewerVersion: document.getElementById("teamViewerVersion").value,
           // 明確設定勾選狀態
           winUpdated: document.getElementById("winUpdateCheck").checked,
           chromeUpdated: document.getElementById("chromeUpdateCheck").checked,
@@ -607,6 +614,7 @@
         console.log("Chrome 勾選狀態：", formObject.chromeUpdated);
         console.log("防毒軟體勾選狀態：", formObject.antivirusUpdated);
         console.log("7-Zip 版本：", formObject.sevenZipVersion);
+        console.log("TeamViewer 版本：", formObject.teamViewerVersion);
 
         // 顯示進度條
         showLoader('正在提交表單...');
