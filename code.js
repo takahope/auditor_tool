@@ -123,7 +123,8 @@ function processFormData(formObject) {
       const headers = [
         "回報時間", "駐站", "電腦產編", 
         "Windows更新", "Chrome更新", "防毒軟體更新", 
-        "7-Zip版本", "TeamViewer版本", "備註"
+        "7-Zip版本", "TeamViewer版本", "Forticlient版本", 
+        "Adobe Acrobat版本", "備註"
       ];
       logSheet.appendRow(headers);
     }
@@ -137,7 +138,9 @@ function processFormData(formObject) {
       formObject.chromeUpdated,
       formObject.antivirusUpdated,
       formObject.sevenZipVersion,
-      formObject.teamViewerVersion,  // TeamViewer 版本（文字輸入）
+      formObject.teamViewerVersion,
+      formObject.forticlientVersion,
+      formObject.adobeAcrobatVersion,
       formObject.notes
     ];
 

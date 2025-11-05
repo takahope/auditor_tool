@@ -436,7 +436,19 @@
           <input type="text" id="teamViewerVersion" name="teamViewerVersion" placeholder="請輸入 TeamViewer 版本（例如：15.0.0 或 無安裝）">
         </div>
 
-        <!-- 問題6: 備註 -->
+        <!-- 問題6: Forticlient 版本 -->
+        <div class="question-card">
+          <h2>Forticlient VPN 版本</h2>
+          <input type="text" id="forticlientVersion" name="forticlientVersion" placeholder="請輸入 Forticlient 版本（例如：7.2.1 或 無安裝）">
+        </div>
+
+        <!-- 問題7: Adobe Acrobat 版本 -->
+        <div class="question-card">
+          <h2>Adobe Acrobat 版本</h2>
+          <input type="text" id="adobeAcrobatVersion" name="adobeAcrobatVersion" placeholder="請輸入 Adobe Acrobat 版本（例如：2024.001 或 無安裝）">
+        </div>
+
+        <!-- 問題8: 備註 -->
         <div class="question-card">
           <h2>備註</h2>
           <textarea id="notes" name="notes" placeholder="如有其他需要說明的事項,請在此填寫..."></textarea>
@@ -602,6 +614,8 @@
           notes: document.getElementById("notes").value,
           sevenZipVersion: document.getElementById("sevenZipVersion").value,
           teamViewerVersion: document.getElementById("teamViewerVersion").value,
+          forticlientVersion: document.getElementById("forticlientVersion").value,
+          adobeAcrobatVersion: document.getElementById("adobeAcrobatVersion").value,
           // 明確設定勾選狀態
           winUpdated: document.getElementById("winUpdateCheck").checked,
           chromeUpdated: document.getElementById("chromeUpdateCheck").checked,
@@ -615,6 +629,8 @@
         console.log("防毒軟體勾選狀態：", formObject.antivirusUpdated);
         console.log("7-Zip 版本：", formObject.sevenZipVersion);
         console.log("TeamViewer 版本：", formObject.teamViewerVersion);
+        console.log("Forticlient 版本：", formObject.forticlientVersion);
+        console.log("Adobe Acrobat 版本：", formObject.adobeAcrobatVersion);
 
         // 顯示進度條
         showLoader('正在提交表單...');
