@@ -1,0 +1,23 @@
+{
+  "name": "auditor-tool-wrapper-app",
+  "version": "1.0.0",
+  "description": "Wrapper App for GAS Web App - Mobile login solution",
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase serve",
+    "deploy": "firebase deploy",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "logs": "firebase hosting:logs"
+  },
+  "keywords": [
+    "google-apps-script",
+    "authentication",
+    "wrapper-app",
+    "firebase-hosting"
+  ],
+  "author": "Your Company",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {},
+  "dependencies": {}
+}
