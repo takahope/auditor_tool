@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">電腦軟體版本稽核</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">歡迎使用</string>
+    <string name="login_subtitle">請使用您的公司帳號登入</string>
+    <string name="login_button_text">使用 Google 帳號登入</string>
+    <string name="login_description">此應用程式用於回報電腦軟體版本更新狀態</string>
+
+    <!-- Error Messages -->
+    <string name="error_wrong_domain">登入失敗</string>
+    <string name="error_wrong_domain_message">請確保您使用的是公司的 Google Workspace 帳號 (@%s)</string>
+    <string name="error_sign_in_failed">登入失敗，請重試</string>
+    <string name="error_network">網路連線失敗，請檢查您的網路設定</string>
+    <string name="error_no_google_play">此裝置未安裝 Google Play 服務</string>
+
+    <!-- WebView -->
+    <string name="webview_loading">載入中…</string>
+    <string name="webview_error_title">載入失敗</string>
+    <string name="webview_error_message">無法載入應用程式，請檢查網路連線</string>
+    <string name="webview_retry">重試</string>
+    <string name="webview_logout">登出</string>
+
+    <!-- Toolbar -->
+    <string name="action_refresh">重新整理</string>
+    <string name="action_home">首頁</string>
+    <string name="action_logout">登出</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_loading">正在啟動…</string>
+
+    <!-- Common -->
+    <string name="ok">確定</string>
+    <string name="cancel">取消</string>
+    <string name="retry">重試</string>
+
+    <!-- Google Sign-In -->
+    <!-- Replace with your actual Web Client ID from Google Cloud Console -->
+    <string name="default_web_client_id" translatable="false">YOUR_WEB_CLIENT_ID.apps.googleusercontent.com</string>
+</resources>
