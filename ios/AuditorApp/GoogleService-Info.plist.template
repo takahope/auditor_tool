@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+    ⚠️⚠️⚠️ 重要說明 ⚠️⚠️⚠️
+
+    這是一個模板文件。您需要從 Google Cloud Console 下載實際的 GoogleService-Info.plist 文件。
+
+    步驟：
+    1. 前往 Google Cloud Console: https://console.cloud.google.com/
+    2. 選擇您的專案（或建立新專案）
+    3. 啟用 Google Sign-In API
+    4. 在「憑證」頁面建立 OAuth 2.0 Client ID (iOS 類型)
+    5. 下載 GoogleService-Info.plist 文件
+    6. 將下載的文件重新命名為 GoogleService-Info.plist（移除 .template）
+    7. 將文件放在此目錄下
+
+    注意：請勿將實際的 GoogleService-Info.plist 提交到版本控制系統。
+    建議將其加入 .gitignore 文件。
+    -->
+
+    <key>CLIENT_ID</key>
+    <string>YOUR_CLIENT_ID.apps.googleusercontent.com</string>
+
+    <key>REVERSED_CLIENT_ID</key>
+    <string>com.googleusercontent.apps.YOUR_CLIENT_ID</string>
+
+    <key>API_KEY</key>
+    <string>YOUR_API_KEY</string>
+
+    <key>GCM_SENDER_ID</key>
+    <string>YOUR_GCM_SENDER_ID</string>
+
+    <key>PLIST_VERSION</key>
+    <string>1</string>
+
+    <key>BUNDLE_ID</key>
+    <string>com.yourcompany.auditorapp</string>
+
+    <key>PROJECT_ID</key>
+    <string>your-project-id</string>
+
+    <key>STORAGE_BUCKET</key>
+    <string>your-project-id.appspot.com</string>
+
+    <key>IS_ADS_ENABLED</key>
+    <false/>
+
+    <key>IS_ANALYTICS_ENABLED</key>
+    <false/>
+
+    <key>IS_APPINVITE_ENABLED</key>
+    <false/>
+
+    <key>IS_GCM_ENABLED</key>
+    <false/>
+
+    <key>IS_SIGNIN_ENABLED</key>
+    <true/>
+
+    <key>GOOGLE_APP_ID</key>
+    <string>1:YOUR_APP_ID:ios:YOUR_IOS_ID</string>
+</dict>
+</plist>

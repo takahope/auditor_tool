@@ -1,0 +1,36 @@
+# Podfile
+# 電腦軟體版本更新稽核紀錄系統 - iOS 原生入口應用程式
+# CocoaPods 依賴管理
+
+# 根據 PRD NFR 6.1：最低支援 iOS 15.0
+platform :ios, '15.0'
+
+# 使用 frameworks（SwiftUI 需要）
+use_frameworks!
+
+target 'AuditorApp' do
+  # 根據 PRD FR 5.1.1：整合 Google Sign-In for iOS SDK
+  pod 'GoogleSignIn', '~> 7.0'
+
+  # 如果需要額外的 Google 服務，可以在此添加
+  # pod 'GoogleAPIClientForREST/Sheets', '~> 3.0' # 範例：Google Sheets API
+
+  target 'AuditorAppTests' do
+    inherit! :search_paths
+    # 測試相關的 pods
+  end
+
+  target 'AuditorAppUITests' do
+    inherit! :search_paths
+    # UI 測試相關的 pods
+  end
+end
+
+# Post install hook - 確保所有 pods 的最低部署目標一致
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+    end
+  end
+end
